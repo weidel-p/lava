@@ -52,9 +52,10 @@ def set_properties(project):
         "target/*,.svn,CVS,.bzr,.hg,.git,__pycache__,.pybuilder/*",
     )
 
-    project.get_property('distutils_commands').append('build')
+    project.set_property('distutils_commands', ['build'])
     project.get_property('distutils_commands').append('sdist')
-    project.get_property('distutils_commands').append('bdist_dumb')
+    project.get_property('distutils_commands').append('bdist_wheel')
+
 
     project.set_property('bandit_break_build', True)
     project.set_property('bandit_include_testsources', False)
@@ -91,6 +92,10 @@ def set_properties_unit(project):
         "flake8_exclude_patterns",
         "target/*,.svn,CVS,.bzr,.hg,.git,__pycache__,.pybuilder/*",
     )
+
+    project.set_property('distutils_commands', ['build'])
+    project.get_property('distutils_commands').append('sdist')
+    project.get_property('distutils_commands').append('bdist_wheel')
 
     project.set_property("unittest_module_glob", "test_*")
 
