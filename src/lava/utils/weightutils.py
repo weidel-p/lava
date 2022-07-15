@@ -80,14 +80,21 @@ def optimize_weight_bits(weight: np.ndarray,
     n -= is_signed
 
     num_weight_bits = 8 - scale_bits - n
+
+    if sign_mode == SignMode.MIXED and num_weight_bits > 9:
+        raise ValueError("Weights must be in range [-256, 254] in step size of 2.")
+    if not sign_mode == SignMode.MIXED and num_weight_bits > 8:
+        raise ValueError("Weights must be in range [0, 255] or [-255, 0].")
+
     weight_exponent = -scale_bits
 
     weight = np.left_shift(weight.astype(np.int32), int(scale_bits))
 
     if loihi2:
-        weight = weight // (1 << (8 - num_weight_bits))
         if sign_mode == SignMode.MIXED:
-            weight = weight // 2
+            weight = weight // (1 << (9 - num_weight_bits))
+        else:
+            weight = weight // (1 << (8 - num_weight_bits))
 
     return (
         weight.astype(int),

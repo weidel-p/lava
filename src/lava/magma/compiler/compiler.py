@@ -664,6 +664,7 @@ class Compiler:
                 else:
                     rs_class = sync_domain.protocol.runtime_service[CPU]
                 log.debug("RuntimeService Class: " + str(rs_class.__name__))
+
                 model_ids: ty.List[int] = [p.id for p in sync_domain.processes]
 
                 rs_builder = RuntimeServiceBuilder(
