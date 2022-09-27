@@ -8,9 +8,10 @@ import numpy as np
 from lava.magma.core.run_conditions import RunSteps
 from lava.magma.core.run_configs import Loihi1SimCfg
 from lava.proc.lif.process import LIF
-from lava.proc.dense.process import LearningDense
+from lava.proc.dense.process import Dense
 from lava.proc.learning_rules.stdp_learning_rule import STDPLoihi
 from lava.proc.io.source import RingBuffer, PySendModelFixed, PySendModelFloat
+from lava.utils.weightutils import SignMode
 
 
 class TestSTDPSim(unittest.TestCase):
@@ -34,7 +35,9 @@ class TestSTDPSim(unittest.TestCase):
 
         lif_0 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=25000)
 
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+        dense = Dense(weights=weights_init,
+                      learning_rule=learning_rule,
+                      sign_mode=SignMode.MIXED)
 
         lif_1 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=20000)
 
@@ -79,7 +82,9 @@ class TestSTDPSim(unittest.TestCase):
         lif_0 = LIF(shape=(num_pre_neurons,), du=0, dv=0, vth=10000,
                     bias_mant=np.array([22000, 25000, 26000]))
 
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+        dense = Dense(weights=weights_init,
+                      learning_rule=learning_rule,
+                      sign_mode=SignMode.MIXED)
 
         lif_1 = LIF(shape=(num_post_neurons,), du=0, dv=0, vth=10000,
                     bias_mant=np.array([20000, 23000]))
@@ -124,7 +129,7 @@ class TestSTDPSim(unittest.TestCase):
 
         lif_0 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.1)
 
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+        dense = Dense(weights=weights_init, learning_rule=learning_rule)
 
         lif_1 = LIF(shape=(size,), du=0, dv=0, vth=1, bias_mant=0.15)
 
@@ -169,7 +174,7 @@ class TestSTDPSim(unittest.TestCase):
         lif_0 = LIF(shape=(num_pre_neurons,), du=0, dv=0, vth=1,
                     bias_mant=np.array([0.08, 0.1, 0.11]))
 
-        dense = LearningDense(weights=weights_init, learning_rule=learning_rule)
+        dense = Dense(weights=weights_init, learning_rule=learning_rule)
 
         lif_1 = LIF(shape=(num_post_neurons,), du=0, dv=0, vth=1,
                     bias_mant=np.array([0.12, 0.15]))
