@@ -215,6 +215,12 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         # Current runtime environment
         self._runtime: ty.Optional[Runtime] = None
 
+        # List of all patches
+        self._patches = proc_params.get("patches", [])
+
+        # Determine shape
+        self.shape = proc_params['shape']
+
     def __del__(self):
         """On destruction, terminate Runtime automatically to
         free compute resources.
@@ -247,6 +253,9 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         self._init_proc_member_obj(attrs)
         self.vars.add_members(attrs)
 
+        for patch in self._patches:
+            patch.register(self)
+
     def _find_attr_by_type(self, cls) -> ty.Dict:
         """Finds all class attributes of a certain class type."""
         attrs = dict()
@@ -262,6 +271,14 @@ class AbstractProcess(metaclass=ProcessPostInitCaller):
         for attr_name, attr in attrs.items():
             attr.name = attr_name
             attr.process = self
+
+    @property
+    def patches(self):
+        return self._patches
+
+    @patches.setter
+    def patches(self, patches):
+        self._patches = patches
 
     @property
     def runtime(self):

@@ -177,6 +177,9 @@ class ChannelBuildersFactory:
         port_pm_class = ChannelBuildersFactory._get_port_process_model_class(
             port
         )
+        # get all patch implementations
+        patches = port.process._patch_impl_map.values()
+
         if hasattr(port_pm_class, port.name):
             if isinstance(port, VarPort):
                 return getattr(port_pm_class, port.var.name).d_type
@@ -184,6 +187,13 @@ class ChannelBuildersFactory:
         elif isinstance(port, ImplicitVarPort):
             return getattr(port_pm_class, port.var.name).d_type
         # Port has different name in Process and ProcessModel
+        elif len(patches) > 0:
+            for patch in patches:
+                if hasattr(patch, port.name):
+                    if isinstance(port, VarPort):
+                        return getattr(patch, port.var.name).d_type
+                    return getattr(patch, port.name).d_type
+
         else:
             raise AssertionError(
                 "Port {!r} not found in "

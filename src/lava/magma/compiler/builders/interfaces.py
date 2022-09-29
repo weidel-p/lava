@@ -96,12 +96,20 @@ class AbstractProcessBuilder(AbstractBuilder):
         proc_model_name = self.proc_model.__name__
         for m in members:
             if not hasattr(self.proc_model, m.name):
-                raise AssertionError(
-                    "Both Process '{}' and ProcessModel '{}' are expected to "
-                    "have {} named '{}'.".format(
-                        proc_name, proc_model_name, m_type, m.name
+                member_found = False
+                # check all patches for member
+                for patch in self.proc_model._patch_impl_map.values():
+                    if hasattr(patch, m.name):
+                        member_found = True
+                        break
+
+                if not member_found:
+                    raise AssertionError(
+                        "Both Process '{}' and ProcessModel '{}' are expected to "
+                        "have {} named '{}'.".format(
+                            proc_name, proc_model_name, m_type, m.name
+                        )
                     )
-                )
 
     @staticmethod
     def _check_not_assigned_yet(

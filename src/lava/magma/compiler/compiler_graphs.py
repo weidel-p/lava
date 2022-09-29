@@ -38,6 +38,7 @@ from lava.magma.core.process.ports.ports import (AbstractPort,
                                                  OutPort, RefPort, VarPort)
 from lava.magma.core.process.process import AbstractProcess
 from lava.magma.core.run_configs import RunConfig
+from lava.magma.core.model.patch import AbstractPatchImpl
 
 ProcMap = ty.Dict[AbstractProcess, ty.Type[AbstractProcessModel]]
 ProcGroup = ty.List[AbstractProcess]
@@ -548,6 +549,15 @@ class AbstractProcGroupDiGraphs(ABC):
         pass
 
 
+def get_all_subclasses(cls):
+    all_subclasses = []
+
+    for subclass in cls.__subclasses__():
+        all_subclasses.append(subclass)
+        all_subclasses.extend(get_all_subclasses(subclass))
+
+    return all_subclasses
+
 class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
     """Concrete subclass of `AbstractProcGroupDiGraphs` that generates
     and holds various directed graphs needed to generate ProcGroups needed
@@ -617,9 +627,21 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
         # 3. Find and select ProcessModels based on RunConfig:
         proc_procmodel_map = ProcGroupDiGraphs._map_proc_to_model(proc_list,
                                                                   self._run_cfg)
+
+        patch_impls = get_all_subclasses(AbstractPatchImpl)
         # Assign ProcessModels to Processes
         for p, pm in proc_procmodel_map.items():
             p._model_class = pm
+
+            # map patches to their implementation
+            p._patch_impl_map = {}
+            for patch in p.patches:
+                for Impl in patch_impls:
+                    # PatchImpl must have same tag as PM
+                    if Impl.implements_patch == patch.__class__ and len(set(pm.tags).intersection(Impl.tags)) > 0:
+                        p._patch_impl_map[patch] = Impl
+            pm._patch_impl_map = p._patch_impl_map
+
         # Number of processes after resolving HierarchicalProcesses
         self._num_procs_post_sub_exp = len(list(proc_procmodel_map.keys()))
         # 4. Generate ResolvedProcDiGraph: In the dictionary {Process:
@@ -648,6 +670,8 @@ class ProcGroupDiGraphs(AbstractProcGroupDiGraphs):
                                       "Does the original computational graph "
                                       "of Processes contain disconnected "
                                       "components?")
+
+
 
     @property
     def raw_proc_digraph(self):

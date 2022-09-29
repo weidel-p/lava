@@ -64,6 +64,8 @@ class PyProcessBuilder(AbstractProcessBuilder):
         self.csp_rs_recv_port: ty.Dict[str, CspRecvPort] = {}
         self.proc_params = proc_params
 
+
+
     def check_all_vars_and_ports_set(self):
         """Checks that Vars and PyPorts assigned from Process have a
         corresponding LavaPyType.
@@ -187,8 +189,14 @@ class PyProcessBuilder(AbstractProcessBuilder):
         proc_name = self.proc_model.implements_process.__name__
         for port_name in new_ports:
             if not hasattr(self.proc_model, port_name):
-                raise AssertionError("PyProcessModel '{}' has \
-                    no port named '{}'.".format(proc_name, port_name))
+                port_found = False
+                # check all patches for member
+                for patch in self.proc_model._patch_impl_map.values():
+                    if hasattr(patch, port_name):
+                        port_found = True
+                        break
+                if not port_found:
+                    raise AssertionError("PyProcessModel '{}' has no port named '{}'.".format(proc_name, port_name))
 
             if port_name in self.csp_ports:
                 self.csp_ports[port_name].extend(new_ports[port_name])
@@ -228,7 +236,12 @@ class PyProcessBuilder(AbstractProcessBuilder):
                 self.csp_rs_recv_port.update({port.name: port})
 
     def _get_lava_type(self, name: str) -> LavaPyType:
-        return getattr(self.proc_model, name)
+        if hasattr(self.proc_model, name):
+            return getattr(self.proc_model, name)
+        else:
+            for patch in self.proc_model._patch_impl_map.values():
+                if hasattr(patch, name):
+                    return getattr(patch, name)
 
     def build(self):
         """Builds a PyProcModel at runtime within Runtime.
@@ -261,6 +274,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
         # this will be carried to ProcessModel
         pm = self.proc_model(self.proc_params)
         pm.model_id = self._model_id
+
 
         # Initialize PyPorts
         for name, p in self.py_ports.items():
@@ -364,7 +378,7 @@ class PyProcessBuilder(AbstractProcessBuilder):
             elif issubclass(lt.cls, (int, float)):
                 var = v.value
             else:
-                raise NotImplementedError("Cannot initiliaze variable "
+                raise NotImplementedError("Cannot initialize variable "
                                           "datatype, \
                                           only subclasses of int and float are \
                                           supported")
@@ -375,5 +389,10 @@ class PyProcessBuilder(AbstractProcessBuilder):
             setattr(pm, "_" + name + "_p", lt.precision)
 
             pm.var_id_to_var_map[v.var_id] = name
+
+        # register all patches
+        for patch, patch_impl in pm._patch_impl_map.items():
+            # init patch and register
+            patch_impl(patch, self, pm)
 
         return pm

@@ -363,7 +363,7 @@ class PyInPortVectorDense(PyInPort):
             fashion.
         """
         return ft.reduce(
-            lambda acc, port: acc + self._transformer.transform(port.recv(),
+            lambda acc, port: acc + self._transformer.transform(port.peek(),
                                                                 port),
             self.csp_ports,
             np.zeros(self._shape, self._d_type),

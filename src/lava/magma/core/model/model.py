@@ -73,6 +73,7 @@ class AbstractProcessModel(ABC):
        initialize it's ProcessModel.
     """
 
+    _patch_impl_map = None
     implements_process: ty.Optional[ty.Type[AbstractProcess]] = None
     implements_protocol: ty.Optional[ty.Type[AbstractSyncProtocol]] = None
     required_resources: ty.List[ty.Type[AbstractResource]] = []

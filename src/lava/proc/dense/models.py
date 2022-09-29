@@ -4,10 +4,6 @@
 
 import numpy as np
 
-from lava.magma.core.model.py.connection import (
-    ConnectionModelFloat,
-    ConnectionModelBitApproximate,
-)
 from lava.magma.core.sync.protocols.loihi_protocol import LoihiProtocol
 from lava.magma.core.model.py.ports import PyInPort, PyOutPort
 from lava.magma.core.model.py.type import LavaPyType
@@ -22,7 +18,7 @@ from lava.utils.weightutils import SignMode, determine_sign_mode,\
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("floating_pt")
-class PyDenseModelFloat(ConnectionModelFloat):
+class PyDenseModelFloat(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections in
     floating point precision. This short and simple ProcessModel can be used
     for quick algorithmic prototyping, without engaging with the nuances of a
@@ -49,16 +45,11 @@ class PyDenseModelFloat(ConnectionModelFloat):
             s_in = self.s_in.recv().astype(bool)
             self.a_buff = self.weights[:, s_in].sum(axis=1)
 
-        if self._learning_rule is not None:
-            self._record_pre_spike_times(s_in)
-
-        super().run_spk()
-
 
 @implements(proc=Dense, protocol=LoihiProtocol)
 @requires(CPU)
 @tag("bit_accurate_loihi", "fixed_pt")
-class PyDenseModelBitAcc(ConnectionModelBitApproximate):
+class PyDenseModelBitAcc(PyLoihiProcessModel):
     """Implementation of Conn Process with Dense synaptic connections that is
     bit-accurate with Loihi's hardware implementation of Dense, which means,
     it mimics Loihi behavior bit-by-bit.
@@ -84,12 +75,12 @@ class PyDenseModelBitAcc(ConnectionModelBitApproximate):
         # and only require scaling on the first timestep of run_spk().
         if not self.weights_set:
             num_weight_bits: int = self.proc_params.get("num_weight_bits", 8)
-            sign_mode: SignMode = self.proc_params.get("sign_mode") \
+            self.sign_mode: SignMode = self.proc_params.get("sign_mode") \
                 or determine_sign_mode(self.weights)
 
-            self.weights = clip_weights(self.weights, sign_mode, num_bits=8)
+            self.weights = clip_weights(self.weights, self.sign_mode, num_bits=8)
             self.weights = truncate_weights(self.weights,
-                                            sign_mode,
+                                            self.sign_mode,
                                             num_weight_bits)
             self.weights_set = True
 
@@ -109,7 +100,4 @@ class PyDenseModelBitAcc(ConnectionModelBitApproximate):
             else np.right_shift(a_accum, -self.weight_exp)
         )
 
-        if self._learning_rule is not None:
-            self._record_pre_spike_times(s_in)
 
-        super().run_spk()
