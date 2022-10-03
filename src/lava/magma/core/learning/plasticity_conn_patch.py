@@ -90,6 +90,8 @@ class PlasticityConnPatchLoihiImpl(AbstractPatchImpl):
         # determine shape
         super().__init__(patch, builder, proc_model)
 
+        proc_model.plasticity = self
+
         # link vars of proc model
         for name in patch.vars.keys():
             setattr(self, name, getattr(proc_model, name))

@@ -212,17 +212,14 @@ learning_rule = STDPLoihi(
     t_epoch=2,
     rng_seed=0,
 )
-
 plasticity_conn_patch = PlasticityConnPatchLoihi(learning_rule=learning_rule)
 
 size = 1
 weights_init = np.eye(size) * 0
 
 lif_0 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=25000)
-
 dense = Dense(weights=weights_init,
               patches=[plasticity_conn_patch])
-
 lif_1 = LIF(shape=(size,), du=0, dv=0, vth=10000, bias_mant=20000)
 
 lif_0.s_out.connect(dense.s_in)

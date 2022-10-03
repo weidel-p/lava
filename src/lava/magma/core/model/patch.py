@@ -13,7 +13,6 @@ class AbstractPatchImpl(ABC):
         self.patch = patch
         self.builder = builder
         self.proc_model = proc_model
-        proc_model.plasticity = self
 
     @abstractmethod
     def register(self):
