@@ -126,15 +126,16 @@ class CspSendPort(AbstractCspSendPort):
         """
         Send data on the channel. May block if the channel is already full.
         """
-        if data.shape != self._shape:
-            raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
+        # if data.shape != self._shape:
+        #     raise AssertionError(f"{data.shape=} {self._shape=} Mismatch")
 
         if isinstance(data, csr_matrix):
             data = find(data, explicit_zeros=True)[2]
 
         self._semaphore.acquire()
-        self._array[self._idx][:] = data[:]
-        self._idx = (self._idx + 1) % self._size
+        self._array[self._idx][0] = len(data)
+        self._array[(self._idx + 1) % self._size][:len(data)] = data[:]
+        self._idx = (self._idx + 2) % self._size
         self._req.release()
 
     def join(self):
@@ -276,7 +277,7 @@ class CspRecvPort(AbstractCspRecvPort):
         if there is no data on the channel.
         """
         self._queue.get(peek=True)
-        result = self._array[self._idx].copy()
+        result = self._array[(self._idx + 1) % self._size].copy()
         return result
 
     def recv(self):
@@ -284,8 +285,15 @@ class CspRecvPort(AbstractCspRecvPort):
         Receive from the channel. Blocks if there is no data on the channel.
         """
         self._queue.get()
-        result = self._array[self._idx].copy()
-        self._idx = (self._idx + 1) % self._size
+        try:
+            num_elements = int(self._array[self._idx][0])
+        except:
+            num_elements = int(self._array[self._idx][0][0])
+
+        if num_elements == 0:
+            num_elements = -1
+        result = self._array[(self._idx + 1) % self._size][:num_elements].copy()
+        self._idx = (self._idx + 2) % self._size
         self._ack.release()
         return result
 

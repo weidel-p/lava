@@ -343,6 +343,7 @@ class PyInPortVectorDense(PyInPort):
             connected to several OutPorts, their input is added in a point-wise
             fashion.
         """
+        
         return ft.reduce(
             lambda acc, port: acc + self._transformer.transform(port.recv(),
                                                                 port),
